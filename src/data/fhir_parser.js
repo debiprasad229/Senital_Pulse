@@ -199,3 +199,4 @@ export function generateSampleMalaffiBundle(incidentType = 'heatwave', zoneId = 
     entry: entries
   };
 }
+
