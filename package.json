@@ -1,0 +1,18 @@
+{
+  "name": "sentinelpulse-early-warning",
+  "version": "1.0.0",
+  "description": "Population and Workforce Health Early Warning Platform",
+  "main": "src/api/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/api/server.js",
+    "test": "node tests/run_tests.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.3.0"
+  }
+}

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelPulse - Population & Workforce Health Early Warning Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .badge-glow { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-white">
+
+  <!-- Top Navigation & Global Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-white tracking-tight">SentinelPulse</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Early Warning v2.4</span>
+          </div>
+          <p class="text-xs text-slate-400">Population & Workforce Health Surveillance System · Challenge 06</p>
+        </div>
+      </div>
+
+      <!-- Controls: Scenario Selector & RBAC Role Switcher -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Scenario Selector -->
+        <div class="flex items-center gap-2 bg-slate-800/80 rounded-lg p-1 border border-slate-700">
+          <label class="text-xs text-slate-400 pl-2 font-medium flex items-center gap-1">
+            <i data-lucide="layers" class="w-3.5 h-3.5"></i> Scenario:
+          </label>
+          <select id="scenarioSelector" class="bg-slate-900 text-xs font-medium text-slate-200 rounded px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer">
+            <option value="heatwave" selected>Heatwave & Thermal Workplace Stress</option>
+            <option value="particulate_respiratory">PM2.5 Plume & Respiratory Surge</option>
+            <option value="viral_workplace_cluster">Logistics Hub Viral Cluster</option>
+          </select>
+        </div>
+
+        <!-- Role-Based Access Control Switcher -->
+        <div class="flex items-center gap-2 bg-slate-800/80 rounded-lg p-1 border border-slate-700">
+          <label class="text-xs text-slate-400 pl-2 font-medium flex items-center gap-1">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i> Role:
+          </label>
+          <select id="roleSelector" class="bg-slate-900 text-xs font-medium text-emerald-300 rounded px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
+            <option value="Public Health Epidemiologist">Public Health Epidemiologist</option>
+            <option value="Occupational Health & Safety Lead">Occupational Health & Safety Lead</option>
+            <option value="Facility Operations / HR Manager">Facility / HR Operations (Privacy Air-Gap)</option>
+            <option value="Regulatory & Environmental Auditor">Regulatory Compliance Auditor</option>
+          </select>
+        </div>
+
+        <button id="exportBriefBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition">
+          <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i> Export Brief
+        </button>
+
+        <button id="refreshBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition shadow-md shadow-cyan-600/20">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Run Simulation
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Day-by-Day Playback Controller -->
+  <section class="border-b border-slate-800/80 bg-slate-900/60 px-6 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-3">
+        <button id="playPauseBtn" class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-cyan-600/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-600/30 font-medium transition">
+          <i data-lucide="play" id="playIcon" class="w-3.5 h-3.5"></i> <span id="playBtnText">Auto-Play Outbreak</span>
+        </button>
+        <span class="text-slate-400">Time Travel:</span>
+        <span id="currentDayDisplay" class="font-mono font-bold text-cyan-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Day 25 / 30</span>
+      </div>
+
+      <div class="flex items-center gap-3 w-full sm:w-1/2">
+        <span class="text-[11px] text-slate-500 font-mono">Day 1</span>
+        <input id="timelineSlider" type="range" min="1" max="30" value="25" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+        <span class="text-[11px] text-slate-500 font-mono">Day 30</span>
+      </div>
+
+      <div class="flex items-center gap-2 text-slate-400 text-[11px]">
+        <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+        <span id="playbackPhaseBadge" class="font-mono text-cyan-300">Phase: Clinical Surge Window</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto p-6 space-y-6 flex-1 w-full">
+
+    <!-- KPI Summary Row -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Card 1: Alert Level & Status -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 relative overflow-hidden backdrop-blur">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-medium text-slate-400">Peak Surveillance Tier</p>
+            <h3 id="kpiTierLabel" class="text-xl font-bold text-amber-400 mt-1">Tier 2: Targeted Control</h3>
+          </div>
+          <div id="kpiTierBadge" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <p id="kpiTierSub" class="text-xs text-slate-400 mt-3 flex items-center gap-1">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i> Zone-A & Zone-D Cross-Signal Surge
+        </p>
+      </div>
+
+      <!-- Card 2: Early Warning Lead Time -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 relative overflow-hidden backdrop-blur">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-medium text-slate-400">Early Warning Lead Time</p>
+            <h3 id="kpiLeadTime" class="text-xl font-bold text-cyan-400 mt-1">+4 Days Ahead</h3>
+          </div>
+          <div class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+            <i data-lucide="clock" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-3 flex items-center gap-1">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i> Pre-clinical workplace signal advantage
+        </p>
+      </div>
+
+      <!-- Card 3: Calibration Accuracy & Sensitivity -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 relative overflow-hidden backdrop-blur">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-medium text-slate-400">Calibration Sensitivity & PPV</p>
+            <h3 id="kpiAccuracy" class="text-xl font-bold text-emerald-400 mt-1">94.8% Sens / 91.2% PPV</h3>
+          </div>
+          <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+            <i data-lucide="target" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-3 flex items-center gap-1">
+          <i data-lucide="shield" class="w-3.5 h-3.5 text-cyan-400"></i> Low False Alarms (< 3.2%)
+        </p>
+      </div>
+
+      <!-- Card 4: Health & Resilience Impact -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 relative overflow-hidden backdrop-blur">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-medium text-slate-400">Averted Clinical Surge Burden</p>
+            <h3 id="kpiImpact" class="text-xl font-bold text-purple-400 mt-1">84 ED Visits Saved</h3>
+          </div>
+          <div class="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400">
+            <i data-lucide="trending-down" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <p id="kpiImpactSub" class="text-xs text-slate-400 mt-3 flex items-center gap-1">
+          <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-emerald-400"></i> $248k Total Economic Benefit
+        </p>
+      </div>
+    </section>
+
+    <!-- Role Privacy Notice Banner -->
+    <div id="rolePrivacyBanner" class="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 flex items-start gap-3 text-xs text-emerald-200">
+      <i data-lucide="info" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
+      <div>
+        <span class="font-semibold" id="roleBannerTitle">Active View: Public Health Epidemiologist</span>
+        <p class="text-slate-300 mt-0.5" id="roleBannerText">
+          Small-cell suppression active: Cell counts under 5 are automatically masked (<5) to preserve patient privacy and eliminate re-identification risks.
+        </p>
+      </div>
+    </div>
+
+    <!-- Section 1 & 2: Geotemporal Zones & Multi-Signal Surveillance -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Zone Status & Map Cards -->
+      <div class="lg:col-span-1 space-y-4">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 backdrop-blur">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <i data-lucide="map-pin" class="w-4 h-4 text-cyan-400"></i> Surveillance Districts & Zones
+            </h2>
+            <span class="text-xs text-slate-400">4 Monitored Zones</span>
+          </div>
+
+          <!-- Interactive District Geo-Map Grid -->
+          <div class="mb-3.5 p-2 rounded-lg bg-slate-950 border border-slate-800/80 relative">
+            <svg viewBox="0 0 300 160" class="w-full h-auto rounded">
+              <!-- Grid background -->
+              <defs>
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" stroke-width="0.8"/>
+                </pattern>
+              </defs>
+              <rect width="300" height="160" fill="url(#grid)" />
+              
+              <!-- Zone A: Industrial Corridor (Top Left) -->
+              <g id="mapZoneA" class="cursor-pointer transition-all hover:opacity-90" onclick="window.selectZone('ZONE-A')">
+                <rect x="15" y="15" width="125" height="60" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" id="mapRectZoneA"/>
+                <text x="25" y="38" fill="#94a3b8" font-size="10" font-weight="bold">ZONE-A</text>
+                <text x="25" y="52" fill="#64748b" font-size="8">Industrial / Logistics</text>
+                <circle cx="120" cy="30" r="5" fill="#f59e0b" id="mapDotZoneA"/>
+              </g>
+
+              <!-- Zone B: Metro Core (Top Right) -->
+              <g id="mapZoneB" class="cursor-pointer transition-all hover:opacity-90" onclick="window.selectZone('ZONE-B')">
+                <rect x="160" y="15" width="125" height="60" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" id="mapRectZoneB"/>
+                <text x="170" y="38" fill="#94a3b8" font-size="10" font-weight="bold">ZONE-B</text>
+                <text x="170" y="52" fill="#64748b" font-size="8">Commercial / Transit</text>
+                <circle cx="265" cy="30" r="5" fill="#10b981" id="mapDotZoneB"/>
+              </g>
+
+              <!-- Zone D: Port Chemical (Bottom Left) -->
+              <g id="mapZoneD" class="cursor-pointer transition-all hover:opacity-90" onclick="window.selectZone('ZONE-D')">
+                <rect x="15" y="88" width="125" height="60" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" id="mapRectZoneD"/>
+                <text x="25" y="111" fill="#94a3b8" font-size="10" font-weight="bold">ZONE-D</text>
+                <text x="25" y="125" fill="#64748b" font-size="8">Port & Chemical</text>
+                <circle cx="120" cy="103" r="5" fill="#ef4444" id="mapDotZoneD"/>
+              </g>
+
+              <!-- Zone C: Residential (Bottom Right) -->
+              <g id="mapZoneC" class="cursor-pointer transition-all hover:opacity-90" onclick="window.selectZone('ZONE-C')">
+                <rect x="160" y="88" width="125" height="60" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" id="mapRectZoneC"/>
+                <text x="170" y="111" fill="#94a3b8" font-size="10" font-weight="bold">ZONE-C</text>
+                <text x="170" y="125" fill="#64748b" font-size="8">Riverside Residential</text>
+                <circle cx="265" cy="103" r="5" fill="#10b981" id="mapDotZoneC"/>
+              </g>
+            </svg>
+            <div class="text-[10px] text-slate-500 text-center mt-1">Interactive Geotemporal Grid · Click zone to isolate metrics</div>
+          </div>
+
+          <div id="zoneCardsContainer" class="space-y-2.5">
+            <!-- Dynamic Zone Cards inserted here -->
+          </div>
+        </div>
+
+        <!-- Privacy Guardian Small-Cell Suppression Inspector -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 backdrop-blur">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2 mb-3">
+            <i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i> Privacy Guardian Inspector
+          </h2>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center py-1.5 border-b border-slate-800">
+              <span class="text-slate-400">Small-Cell Suppression Policy:</span>
+              <span class="font-mono text-emerald-300 font-semibold">Strict (n &lt; 5)</span>
+            </div>
+            <div class="flex justify-between items-center py-1.5 border-b border-slate-800">
+              <span class="text-slate-400">Individual Clinical Identifiers:</span>
+              <span class="font-mono text-emerald-300 font-semibold">0% (Zero PII)</span>
+            </div>
+            <div class="flex justify-between items-center py-1.5 border-b border-slate-800">
+              <span class="text-slate-400">HR / Employer Air-Gap:</span>
+              <span class="font-mono text-cyan-300 font-semibold">Enforced (Work-Orders Only)</span>
+            </div>
+            <div class="p-2.5 mt-2 rounded-lg bg-slate-800/60 text-slate-300 text-xs">
+              <span class="font-semibold text-slate-100">Audit Rule:</span> Individual personnel health logs are strictly isolated from management view to prevent punitive or disciplinary misuse.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multi-Signal Timeline Chart -->
+      <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-xl p-5 backdrop-blur flex flex-col justify-between">
+        <div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <i data-lucide="line-chart" class="w-4 h-4 text-cyan-400"></i> Multi-Signal Lead Time Progression (30-Day Window)
+              </h2>
+              <p class="text-xs text-slate-400">Comparing Environmental & Workplace signals against lagged Clinical Hospital surge</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1 text-xs text-cyan-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> Pre-Clinical Signals
+              </span>
+              <span class="inline-flex items-center gap-1 text-xs text-rose-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block"></span> Lagged Hospital Surge
+              </span>
+            </div>
+          </div>
+          <div class="h-64 w-full relative">
+            <canvas id="multiSignalChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Annotation Bar -->
+        <div class="mt-4 pt-3 border-t border-slate-800 text-xs flex flex-wrap items-center justify-between text-slate-400 gap-2">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[11px]">EARS C1/C2/C3 Active</span>
+            <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono text-[11px]">Farrington Baseline Calibrated</span>
+          </div>
+          <div class="text-slate-300 italic" id="chartAnnotation">
+            Workplace and environmental indicators breach warning thresholds ~4 days ahead of clinical visits.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Section 3 & 4: Explainability Waterfall & Decision Support Playbooks -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Explainable Anomaly Inspector -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 backdrop-blur">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="help-circle" class="w-4 h-4 text-amber-400"></i> Explainable Anomaly Attribution (Why Did Alert Fire?)
+            </h2>
+            <p class="text-xs text-slate-400">Quantified feature contributions & statistical z-score deviations</p>
+          </div>
+          <span id="selectedZoneBadge" class="text-xs font-mono font-medium px-2 py-1 rounded bg-slate-800 text-cyan-300 border border-slate-700">ZONE-A</span>
+        </div>
+
+        <!-- Natural language narrative card -->
+        <div id="narrativeCard" class="p-3.5 rounded-lg bg-amber-950/30 border border-amber-800/40 text-xs text-amber-200 mb-4">
+          Alert triggered at Tier 2 in Industrial & Logistics Corridor. Primary drivers: Wet-Bulb Temperature (+2.8σ deviation, 42% weight), Workplace Sickness Absence (+3.1σ deviation, 36% weight).
+        </div>
+
+        <!-- Attribution Breakdown Progress Bars -->
+        <div class="space-y-3" id="attributionList">
+          <!-- Dynamically populated signal attribution bars -->
+        </div>
+
+        <!-- Synergy and Timing Metadata -->
+        <div class="mt-5 pt-3.5 border-t border-slate-800 grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <span class="text-slate-400 block">Surveillance Phase:</span>
+            <span id="temporalPhaseLabel" class="font-semibold text-cyan-300">Early Warning Lead Phase</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Cross-Signal Synergy Multiplier:</span>
+            <span id="synergyMultiplierLabel" class="font-mono font-semibold text-emerald-400">1.45x (Thermal & Fatigue)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actionable Decision Support Playbook Matrix -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 backdrop-blur flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i> Actionable Preventive Playbooks & Decision Support
+              </h2>
+              <p class="text-xs text-slate-400">Calibrated interventions with accountable operational roles & evidence base</p>
+            </div>
+            <span id="playbookCountBadge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">2 Active</span>
+          </div>
+
+          <div id="playbooksContainer" class="space-y-3.5 overflow-y-auto max-h-[380px] pr-1">
+            <!-- Dynamic Playbooks rendered here -->
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span class="flex items-center gap-1.5 text-slate-300">
+            <i data-lucide="scale" class="w-3.5 h-3.5 text-cyan-400"></i> Verified against OSHA NEP & CDC Syndromic Protocols
+          </span>
+          <button id="dispatchWorkOrderBtn" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition text-xs flex items-center gap-1">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i> Dispatch Preventive Work-Orders
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Section 5: Validation Studio & Stress-Testing Harness -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 backdrop-blur">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+            <i data-lucide="flask-conical" class="w-4 h-4 text-indigo-400"></i> Operational Validation Studio & Stress-Testing Benchmark
+          </h2>
+          <p class="text-xs text-slate-400">Back-tested historical scenarios, lead time verification, and missing-data resilience curves</p>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <div class="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+            <span class="text-slate-400">False Alarm Rate (FAR):</span>
+            <span id="farMetric" class="font-mono font-bold text-emerald-400 ml-1">2.4%</span>
+          </div>
+          <div class="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+            <span class="text-slate-400">F1-Score:</span>
+            <span id="f1Metric" class="font-mono font-bold text-cyan-400 ml-1">0.93</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <!-- Stress Test Table -->
+        <div class="md:col-span-2 overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider">
+                <th class="py-2.5 px-3">Missing Data / Geolocation Dropout</th>
+                <th class="py-2.5 px-3">Sensitivity</th>
+                <th class="py-2.5 px-3">Positive Predictive Value</th>
+                <th class="py-2.5 px-3">Lead Time Days</th>
+                <th class="py-2.5 px-3">Operational Reliability Status</th>
+              </tr>
+            </thead>
+            <tbody id="stressTestTableBody" class="divide-y divide-slate-800/60 font-mono">
+              <!-- Dynamically populated stress-test rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Health & Economic Impact Counterfactual Summary -->
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/60 flex flex-col justify-between">
+          <div>
+            <h3 class="font-semibold text-slate-200 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <i data-lucide="calculator" class="w-3.5 h-3.5 text-purple-400"></i> Impact Counterfactual
+            </h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Unmitigated Surge Admissions:</span>
+                <span id="impactUnmitigated" class="font-semibold text-rose-400">128 visits</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Prevented Clinical Visits:</span>
+                <span id="impactAverted" class="font-semibold text-emerald-400">84 visits (-65%)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Preserved Workdays:</span>
+                <span id="impactWorkdays" class="font-semibold text-cyan-400">312 days saved</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Net Financial Savings:</span>
+                <span id="impactNetSavings" class="font-semibold text-emerald-300 font-mono">$248,600</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-700/50 text-[11px] text-slate-400 italic">
+            Counterfactual calculations benchmarked against peer-reviewed epidemiological and OSHA DART economic models.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="border-t border-slate-800 bg-slate-900/60 px-6 py-4 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-slate-300">SentinelPulse</span> · Challenge 06: Population & Workforce Health Early Warning
+      </div>
+      <div class="flex items-center gap-4 text-slate-500 text-[11px]">
+        <span>Explainable Surveillance</span> · <span>Small-Cell Suppression</span> · <span>Decision Playbooks</span> · <span>Operational Backtesting</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
+
