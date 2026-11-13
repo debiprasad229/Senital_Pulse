@@ -3,12 +3,12 @@
  * Challenge 06: Population and Workforce Health Early Warning
  */
 
-// Canonical Zones / Geographic Sub-districts
+// Canonical Zones / Geographic Sub-districts (Abu Dhabi Workforce & Industrial Ecosystem)
 export const ZONES = {
-  'ZONE-A': { id: 'ZONE-A', name: 'Industrial & Logistics Corridor', type: 'Workplace/Industrial', population: 24500, workforce: 14200, lat: 40.7128, lng: -74.0060 },
-  'ZONE-B': { id: 'ZONE-B', name: 'Metro Commercial & Civic Core', type: 'Commercial/Transit', population: 58000, workforce: 28000, lat: 40.7306, lng: -73.9925 },
-  'ZONE-C': { id: 'ZONE-C', name: 'Riverside High-Density Residential', type: 'Residential/Family', population: 42000, workforce: 19500, lat: 40.7484, lng: -73.9857 },
-  'ZONE-D': { id: 'ZONE-D', name: 'Port Operations & Chemical Warehousing', type: 'Heavy Industrial', population: 16500, workforce: 11800, lat: 40.7011, lng: -74.0150 }
+  'ZONE-A': { id: 'ZONE-A', name: 'Mussafah / ICAD Industrial City', type: 'Manufacturing & Heavy Fabrication', population: 38200, workforce: 29500, lat: 24.3417, lng: 54.4969 },
+  'ZONE-B': { id: 'ZONE-B', name: 'Abu Dhabi Civic & Commercial Core', type: 'Commercial, Financial & Transit', population: 64000, workforce: 32000, lat: 24.4856, lng: 54.3649 },
+  'ZONE-C': { id: 'ZONE-C', name: 'Al Reem Island & Riverside Urban', type: 'High-Density Residential & Services', population: 48500, workforce: 19800, lat: 24.4975, lng: 54.4042 },
+  'ZONE-D': { id: 'ZONE-D', name: 'KIZAD Industrial Zone & Khalifa Port', type: 'Petrochemicals, Maritime & Logistics', population: 19200, workforce: 15400, lat: 24.7865, lng: 54.6865 }
 };
 
 // Signal Categories

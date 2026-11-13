@@ -12,6 +12,19 @@ let selectedZoneId = 'ZONE-A';
 let currentDayIndex = 24; // Day 25 (0-indexed)
 let isAutoPlaying = false;
 let playInterval = null;
+let currentAiBrief = null;
+
+// Modal management
+window.openModal = function(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.remove('hidden');
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.closeModal = function(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.add('hidden');
+};
 
 // Expose zone selector globally for SVG map interaction
 window.selectZone = function(zoneId) {
@@ -23,6 +36,7 @@ window.selectZone = function(zoneId) {
     renderMultiSignalChart(activeData);
     renderExplainability(activeData, selectedZoneId);
     renderPlaybooks(activeData, selectedZoneId);
+    updateSvgMapColors();
   }
 };
 
@@ -77,6 +91,61 @@ function setupEventListeners() {
   if (exportBriefBtn) {
     exportBriefBtn.addEventListener('click', () => {
       exportExecutiveBrief();
+    });
+  }
+
+  // Standout Feature 1: Malaffi HIE Modal
+  const malaffiBtn = document.getElementById('malaffiModalBtn');
+  if (malaffiBtn) {
+    malaffiBtn.addEventListener('click', () => {
+      window.openModal('malaffiModal');
+      fetchSampleFhirBundle();
+    });
+  }
+
+  const btnFetchFhir = document.getElementById('btnFetchFhirBundle');
+  if (btnFetchFhir) {
+    btnFetchFhir.addEventListener('click', () => {
+      fetchSampleFhirBundle();
+    });
+  }
+
+  const btnIngestFhir = document.getElementById('btnIngestFhirBundle');
+  if (btnIngestFhir) {
+    btnIngestFhir.addEventListener('click', () => {
+      ingestSampleFhirBundle();
+    });
+  }
+
+  // Standout Feature 2: MS Teams Adaptive Card Modal
+  const msTeamsBtn = document.getElementById('msTeamsAlertBtn');
+  if (msTeamsBtn) {
+    msTeamsBtn.addEventListener('click', () => {
+      updateTeamsModalCard();
+      window.openModal('teamsModal');
+    });
+  }
+
+  const btnSendTeams = document.getElementById('btnSendTeamsLive');
+  if (btnSendTeams) {
+    btnSendTeams.addEventListener('click', () => {
+      dispatchTeamsWebhookLive();
+    });
+  }
+
+  // Standout Feature 3: AI Incident Commander Modal
+  const aiBriefBtn = document.getElementById('aiCommanderModalBtn');
+  if (aiBriefBtn) {
+    aiBriefBtn.addEventListener('click', () => {
+      generateAndDisplayAiBrief();
+      window.openModal('aiBriefModal');
+    });
+  }
+
+  const btnDownloadAiBrief = document.getElementById('btnDownloadAiBrief');
+  if (btnDownloadAiBrief) {
+    btnDownloadAiBrief.addEventListener('click', () => {
+      downloadAiCommanderBrief();
     });
   }
 }
@@ -184,13 +253,48 @@ function exportExecutiveBrief() {
 }
 
 /**
- * Fetch and render full backtested scenario data
+ * Fetch and render full backtested scenario or live telemetry data
  */
 async function loadScenario(scenario) {
   try {
-    const res = await fetch(`/api/backtest?scenario=${scenario}`);
+    let url = `/api/backtest?scenario=${scenario}`;
+    let isLive = false;
+
+    if (scenario === 'live_telemetry') {
+      isLive = true;
+      url = `/api/backtest?scenario=heatwave`; // Baseline reference
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
     activeData = data;
+
+    // Overlay real-time Open-Meteo live readings if in live mode
+    if (isLive) {
+      try {
+        const liveRes = await fetch('/api/telemetry/live');
+        const liveJson = await liveRes.json();
+        const zonesTelemetry = liveJson.zones || [];
+
+        data.timeline.forEach(t => {
+          if (t.dayIndex === currentDayIndex) {
+            const zLive = zonesTelemetry.find(z => z.zoneId === t.zoneId);
+            if (zLive) {
+              t.rawRecord.environmental.wbgt = zLive.environmental.wbgt;
+              t.rawRecord.environmental.pm25 = zLive.environmental.pm25;
+              t.rawRecord.environmental.aqi = zLive.environmental.aqi;
+            }
+          }
+        });
+
+        const annotElem = document.getElementById('chartAnnotation');
+        if (annotElem) {
+          annotElem.innerHTML = `<span class="text-rose-400 font-bold">🔴 LIVE TELEMETRY ACTIVE:</span> Ingesting real-time Open-Meteo ambient temperature, humidity & air quality across Abu Dhabi industrial zones.`;
+        }
+      } catch (liveErr) {
+        console.warn('Live telemetry fetch warning:', liveErr);
+      }
+    }
 
     updateKPIs(data);
     renderZoneCards(data);
@@ -199,6 +303,153 @@ async function loadScenario(scenario) {
     renderPlaybooks(data, selectedZoneId);
     renderStressTestTable(data.stressTest);
     updateRolePrivacyView();
+    updateSvgMapColors();
+
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  } catch (err) {
+    console.error('Failed to load scenario data:', err);
+  }
+}
+
+// -------------------------------------------------------------
+// STANDOUT CAPABILITY 1: MALAFFI HL7 FHIR v4 INTEROPERABILITY
+// -------------------------------------------------------------
+let cachedFhirBundle = null;
+
+async function fetchSampleFhirBundle() {
+  const incident = document.getElementById('fhirIncidentSelect')?.value || 'heatwave';
+  const preview = document.getElementById('fhirPayloadPreview');
+  const statusBox = document.getElementById('fhirIngestStatusBox');
+  if (statusBox) statusBox.classList.add('hidden');
+
+  if (preview) preview.innerText = 'Connecting to Malaffi HIE Node...';
+
+  try {
+    const res = await fetch(`/api/fhir/sample-bundle?incident=${incident}&zoneId=${selectedZoneId}`);
+    const bundle = await res.json();
+    cachedFhirBundle = bundle;
+    if (preview) preview.innerText = JSON.stringify(bundle, null, 2);
+  } catch (err) {
+    if (preview) preview.innerText = 'Error fetching Malaffi FHIR bundle: ' + err.message;
+  }
+}
+
+async function ingestSampleFhirBundle() {
+  if (!cachedFhirBundle) await fetchSampleFhirBundle();
+  const statusBox = document.getElementById('fhirIngestStatusBox');
+
+  try {
+    const res = await fetch('/api/fhir/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cachedFhirBundle)
+    });
+    const parsed = await res.json();
+
+    if (statusBox) {
+      statusBox.classList.remove('hidden');
+      statusBox.innerHTML = `
+        <strong>✓ Malaffi HIE Ingestion Validated:</strong> Processed ${parsed.totalEntries} FHIR resources.
+        Extracted syndromic presentations for ${selectedZoneId}: Heat Exhaustion (T67.0): ${parsed.aggregatedByZone[selectedZoneId].heatStrainCount}, Respiratory: ${parsed.aggregatedByZone[selectedZoneId].respiratoryCount}. Zero patient re-identification risk.
+      `;
+    }
+  } catch (err) {
+    alert('FHIR Ingestion error: ' + err.message);
+  }
+}
+
+// -------------------------------------------------------------
+// STANDOUT CAPABILITY 2: MICROSOFT TEAMS ADAPTIVE CARDS
+// -------------------------------------------------------------
+function updateTeamsModalCard() {
+  if (!activeData) return;
+  const zoneRecords = activeData.timeline.filter(t => t.zoneId === selectedZoneId);
+  const peak = zoneRecords.reduce((max, r) => r.evaluation.compositeRisk > max.evaluation.compositeRisk ? r : max, zoneRecords[0]);
+  if (!peak) return;
+
+  const cardTitle = document.getElementById('cardModalTitle');
+  const cardRisk = document.getElementById('cardModalRisk');
+  const cardWbgt = document.getElementById('cardModalWbgt');
+  const cardAbsence = document.getElementById('cardModalAbsence');
+  const cardRole = document.getElementById('cardModalRole');
+
+  if (cardTitle) cardTitle.innerText = `${peak.zoneName} (${peak.zoneId})`;
+  if (cardRisk) cardRisk.innerText = `${peak.evaluation.compositeRisk} / 100 (${peak.evaluation.tierLabel})`;
+  if (cardWbgt) cardWbgt.innerText = `${peak.rawRecord.environmental.wbgt}°C (+${peak.evaluation.zScores.wbgt}σ)`;
+  if (cardAbsence) cardAbsence.innerText = `${peak.rawRecord.workplace.sicknessAbsenceRate}% (+${peak.evaluation.zScores.absence}σ)`;
+  if (cardRole) cardRole.innerText = peak.playbooks?.activePlaybooks?.[0]?.responsibleRole || 'Occupational Health Lead';
+}
+
+async function dispatchTeamsWebhookLive() {
+  const webhookUrl = document.getElementById('teamsWebhookInput')?.value?.trim();
+  if (!activeData) return;
+
+  const zoneRecords = activeData.timeline.filter(t => t.zoneId === selectedZoneId);
+  const peak = zoneRecords.reduce((max, r) => r.evaluation.compositeRisk > max.evaluation.compositeRisk ? r : max, zoneRecords[0]);
+
+  try {
+    const res = await fetch('/api/webhooks/dispatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        webhookUrl: webhookUrl || null,
+        evaluation: peak.evaluation,
+        currentRecord: peak.rawRecord,
+        playbook: peak.playbooks?.activePlaybooks?.[0]
+      })
+    });
+    const result = await res.json();
+    alert(`✓ Microsoft Teams Dispatch Status: ${result.status}\n${result.message || 'Adaptive Card v1.4 payload validated.'}`);
+  } catch (err) {
+    alert('Webhook error: ' + err.message);
+  }
+}
+
+// -------------------------------------------------------------
+// STANDOUT CAPABILITY 3: AI INCIDENT COMMANDER SYNTHESIS
+// -------------------------------------------------------------
+async function generateAndDisplayAiBrief() {
+  const briefContent = document.getElementById('aiBriefContent');
+  const briefIdElem = document.getElementById('briefIdDisplay');
+  if (briefContent) briefContent.innerText = 'Synthesizing multi-signal telemetry & applying MoHRE / ADPHC standards...';
+
+  if (!activeData) return;
+  const zoneRecords = activeData.timeline.filter(t => t.zoneId === selectedZoneId);
+  const peak = zoneRecords.reduce((max, r) => r.evaluation.compositeRisk > max.evaluation.compositeRisk ? r : max, zoneRecords[0]);
+
+  try {
+    const res = await fetch('/api/ai/brief', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        evaluation: peak.evaluation,
+        currentRecord: peak.rawRecord,
+        playbooks: peak.playbooks,
+        impact: activeData.impact
+      })
+    });
+    const brief = await res.json();
+    currentAiBrief = brief;
+
+    if (briefIdElem) briefIdElem.innerText = brief.briefId;
+    if (briefContent) briefContent.innerText = brief.markdownReport;
+  } catch (err) {
+    if (briefContent) briefContent.innerText = 'Error generating AI brief: ' + err.message;
+  }
+}
+
+function downloadAiCommanderBrief() {
+  if (!currentAiBrief) return;
+  const dataStr = 'data:text/markdown;charset=utf-8,' + encodeURIComponent(currentAiBrief.markdownReport);
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute('href', dataStr);
+  downloadAnchor.setAttribute('download', `SentinelPulse_AI_Brief_${selectedZoneId}.md`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+}
 
     // Re-render Lucide icons
     if (window.lucide) {

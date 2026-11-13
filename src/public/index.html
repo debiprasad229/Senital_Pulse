@@ -40,9 +40,10 @@
             <i data-lucide="layers" class="w-3.5 h-3.5"></i> Scenario:
           </label>
           <select id="scenarioSelector" class="bg-slate-900 text-xs font-medium text-slate-200 rounded px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer">
-            <option value="heatwave" selected>Heatwave & Thermal Workplace Stress</option>
-            <option value="particulate_respiratory">PM2.5 Plume & Respiratory Surge</option>
+            <option value="heatwave" selected>Heatwave & Thermal Stress (Mussafah/ICAD)</option>
+            <option value="particulate_respiratory">PM2.5 Plume & Respiratory Surge (KIZAD Port)</option>
             <option value="viral_workplace_cluster">Logistics Hub Viral Cluster</option>
+            <option value="live_telemetry">🔴 Live UAE Industrial Telemetry (Open-Meteo)</option>
           </select>
         </div>
 
@@ -59,12 +60,21 @@
           </select>
         </div>
 
+        <!-- Standout Feature Modals: Malaffi HIE & AI Commander -->
+        <button id="malaffiModalBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-950/90 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-200 text-xs font-medium transition shadow-sm">
+          <i data-lucide="network" class="w-3.5 h-3.5 text-indigo-400"></i> Malaffi HIE (FHIR)
+        </button>
+
+        <button id="aiCommanderModalBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-700/60 text-purple-200 text-xs font-medium transition shadow-sm">
+          <i data-lucide="bot" class="w-3.5 h-3.5 text-purple-400"></i> AI Commander
+        </button>
+
         <button id="exportBriefBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition">
           <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i> Export Brief
         </button>
 
         <button id="refreshBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition shadow-md shadow-cyan-600/20">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Run Simulation
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sync Data
         </button>
       </div>
     </div>
@@ -358,13 +368,18 @@
           </div>
         </div>
 
-        <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
           <span class="flex items-center gap-1.5 text-slate-300">
-            <i data-lucide="scale" class="w-3.5 h-3.5 text-cyan-400"></i> Verified against OSHA NEP & CDC Syndromic Protocols
+            <i data-lucide="scale" class="w-3.5 h-3.5 text-cyan-400"></i> MoHRE Midday Ban & ADPHC Thermal Standards
           </span>
-          <button id="dispatchWorkOrderBtn" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition text-xs flex items-center gap-1">
-            <i data-lucide="send" class="w-3.5 h-3.5"></i> Dispatch Preventive Work-Orders
-          </button>
+          <div class="flex items-center gap-2">
+            <button id="msTeamsAlertBtn" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition text-xs flex items-center gap-1 shadow-sm">
+              <i data-lucide="bell" class="w-3.5 h-3.5"></i> MS Teams Card
+            </button>
+            <button id="dispatchWorkOrderBtn" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition text-xs flex items-center gap-1 shadow-sm">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i> Dispatch Work-Orders
+            </button>
+          </div>
         </div>
       </div>
 
@@ -455,6 +470,203 @@
       </div>
     </div>
   </footer>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 1: MALAFFI HIE / HL7 FHIR v4 INTEROPERABILITY SANDBOX   -->
+  <!-- ============================================================== -->
+  <div id="malaffiModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-indigo-700/60 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 bg-indigo-950/40 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-400">
+            <i data-lucide="network" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-100 text-sm">Malaffi HIE (Abu Dhabi) · HL7 FHIR v4.0 Sandbox</h3>
+            <p class="text-[11px] text-slate-400">Interoperable Clinical Syndromic Surveillance Connector · Zero PII Leakage</p>
+          </div>
+        </div>
+        <button onclick="window.closeModal('malaffiModal')" class="text-slate-400 hover:text-slate-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-4 text-xs flex-1">
+        <div class="p-3 rounded-lg bg-indigo-950/30 border border-indigo-800/40 text-indigo-200 flex items-center justify-between">
+          <div>
+            <span class="font-semibold">Malaffi Interoperability Specification:</span>
+            <p class="text-[11px] text-slate-300 mt-0.5">Ingests FHIR Bundles containing Encounter and Observation resources mapped to LOINC 82257-7 (Thermal Strain) and ICD-10 T67.0 / J45.9.</p>
+          </div>
+          <span class="px-2 py-0.5 rounded font-mono text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">FHIR 4.0.1</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2">
+            <label class="text-slate-400">Syndromic Cluster:</label>
+            <select id="fhirIncidentSelect" class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-slate-200 font-medium">
+              <option value="heatwave">Mussafah ICAD Thermal Stress (T67.0)</option>
+              <option value="particulate_respiratory">KIZAD Port Acute Bronchospasm (J45.9)</option>
+            </select>
+          </div>
+          <button id="btnFetchFhirBundle" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition flex items-center gap-1.5">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Generate Malaffi Bundle
+          </button>
+          <button id="btnIngestFhirBundle" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition flex items-center gap-1.5">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Ingest & Parse Bundle
+          </button>
+        </div>
+
+        <!-- Ingestion Status Result Box -->
+        <div id="fhirIngestStatusBox" class="p-3 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-400 hidden">
+          ✓ Bundle successfully parsed into SentinelPulse clinical surveillance engine.
+        </div>
+
+        <!-- Raw FHIR JSON Payload Preview -->
+        <div>
+          <label class="font-semibold text-slate-300 block mb-1">HL7 FHIR v4.0 Bundle (Raw JSON Ingestion Stream):</label>
+          <pre id="fhirPayloadPreview" class="p-3 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-cyan-300 max-h-60 overflow-y-auto overflow-x-auto select-all">Loading Malaffi FHIR bundle...</pre>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/60 flex justify-between items-center text-xs">
+        <span class="text-slate-400 text-[11px]">Standardized on HL7 FHIR US Core & Malaffi UAE Profiles</span>
+        <button onclick="window.closeModal('malaffiModal')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 2: MICROSOFT TEAMS ADAPTIVE CARD DISPATCH & PREVIEW    -->
+  <!-- ============================================================== -->
+  <div id="teamsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-blue-600/60 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 bg-blue-950/40 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
+            <i data-lucide="bell-ring" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-100 text-sm">Microsoft Teams Adaptive Card v1.4 Dispatch</h3>
+            <p class="text-[11px] text-slate-400">Enterprise Incident Routing & Closed-Loop Notification</p>
+          </div>
+        </div>
+        <button onclick="window.closeModal('teamsModal')" class="text-slate-400 hover:text-slate-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-4 text-xs flex-1">
+        <!-- Visual Rendering of the Teams Card -->
+        <div class="border border-slate-700 bg-slate-950 rounded-xl p-4 shadow-lg space-y-3 font-sans">
+          <!-- Card Header Banner -->
+          <div class="border-l-4 border-amber-500 pl-3 py-1">
+            <span class="text-[10px] font-mono tracking-wider uppercase text-amber-400 font-bold">SENTINELPULSE · TARGETED OPERATIONAL CONTROL</span>
+            <h4 class="text-sm font-bold text-slate-100" id="cardModalTitle">Mussafah / ICAD Industrial City (ZONE-A)</h4>
+          </div>
+
+          <!-- FactSet Grid -->
+          <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900/60 p-3 rounded-lg border border-slate-800/80 font-mono">
+            <div>
+              <span class="text-slate-400 block text-[10px]">Composite Risk Score:</span>
+              <span class="font-bold text-amber-400" id="cardModalRisk">68 / 100 (Tier 2)</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Ambient WBGT:</span>
+              <span class="font-bold text-cyan-300" id="cardModalWbgt">34.8°C (+2.7σ)</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Sickness Absence:</span>
+              <span class="font-bold text-rose-300" id="cardModalAbsence">6.4% (+3.1σ)</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Accountable Role:</span>
+              <span class="font-bold text-emerald-300" id="cardModalRole">Occupational Health Lead</span>
+            </div>
+          </div>
+
+          <p class="text-[11px] text-slate-400 italic">
+            <strong>Regulatory Standard:</strong> UAE MoHRE Midday Work Ban, Abu Dhabi Public Health Centre (ADPHC) Thermal Standards & OSHA NEP.
+          </p>
+
+          <!-- Interactive Action Buttons -->
+          <div class="flex gap-2 pt-2 border-t border-slate-800">
+            <button class="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center gap-1">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i> Acknowledge & Deploy Rest Breaks
+            </button>
+            <button class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs">
+              Open Cockpit
+            </button>
+          </div>
+        </div>
+
+        <!-- Optional Live Webhook URL Input -->
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
+          <label class="font-semibold text-slate-300 block text-[11px]">Incoming Webhook URL (Optional):</label>
+          <div class="flex gap-2">
+            <input id="teamsWebhookInput" type="text" placeholder="https://outlook.office.com/webhook/..." class="bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 text-xs flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <button id="btnSendTeamsLive" class="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shrink-0 flex items-center gap-1">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i> Dispatch Alert
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-500">Leave blank to test in simulated mode (no corporate Microsoft Teams account required).</p>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/60 flex justify-between items-center text-xs">
+        <span class="text-slate-400 text-[11px]">Valid Adaptive Card v1.4 JSON Schema</span>
+        <button onclick="window.closeModal('teamsModal')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 3: AI INCIDENT COMMANDER EXECUTIVE BRIEFING DRAWER      -->
+  <!-- ============================================================== -->
+  <div id="aiBriefModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-purple-600/60 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 bg-purple-950/40 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-lg bg-purple-600/20 border border-purple-500/30 text-purple-400">
+            <i data-lucide="bot" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-100 text-sm">AI Incident Commander Briefing & Regulatory Advisory</h3>
+            <p class="text-[11px] text-slate-400">Algorithmic Synthesis · MoHRE & ADPHC Compliance Mapping</p>
+          </div>
+        </div>
+        <button onclick="window.closeModal('aiBriefModal')" class="text-slate-400 hover:text-slate-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-4 text-xs flex-1">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+          <span class="font-mono text-cyan-300 font-bold" id="briefIdDisplay">BRIEF-AIC-84920</span>
+          <button id="btnDownloadAiBrief" class="px-3 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs flex items-center gap-1.5">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Executive Brief (.md)
+          </button>
+        </div>
+
+        <div id="aiBriefContent" class="space-y-4 font-mono text-[11px] text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800 leading-relaxed whitespace-pre-wrap select-all">
+          Generating AI Incident Commander Briefing...
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/60 flex justify-between items-center text-xs">
+        <span class="text-slate-400 text-[11px]">Synthesized autonomously by SentinelPulse AI Core</span>
+        <button onclick="window.closeModal('aiBriefModal')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script src="/app.js"></script>
 </body>

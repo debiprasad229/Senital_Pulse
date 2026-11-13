@@ -17,6 +17,10 @@ import { generatePlaybooks } from '../src/decision/playbooks.js';
 import { runBacktest, runMissingDataStressTest } from '../src/validation/backtester.js';
 import { calculateImpactMetrics } from '../src/decision/impact.js';
 import { ROLES } from '../src/models/signals.js';
+import { calculateWBGT, calculateWetBulbTemperature, fetchLiveZoneTelemetry } from '../src/data/telemetry_service.js';
+import { generateSampleMalaffiBundle, parseMalaffiFHIRBundle } from '../src/data/fhir_parser.js';
+import { formatTeamsAdaptiveCard, dispatchTeamsAlert } from '../src/decision/webhook_dispatcher.js';
+import { generateAICommanderBrief } from '../src/decision/ai_commander.js';
 
 let passedTests = 0;
 let failedTests = 0;
@@ -133,6 +137,57 @@ const impact = calculateImpactMetrics(backtest.timeline.map(t => ({ tierLevel: t
 assert(impact.counterfactualAnalysis.avertedEdVisits > 0, `Quantifies averted emergency department visits: ${impact.counterfactualAnalysis.avertedEdVisits}`);
 assert(impact.counterfactualAnalysis.savedLostWorkdays > 0, `Quantifies preserved worker days: ${impact.counterfactualAnalysis.savedLostWorkdays}`);
 assert(impact.economicImpact.totalEconomicBenefit > 0, `Quantifies economic value added: $${impact.economicImpact.totalEconomicBenefit.toLocaleString()}`);
+
+// -----------------------------------------------------------------
+// TEST GROUP 8: LIVE ENVIRONMENTAL TELEMETRY & WBGT PSYCHROMETRICS
+// -----------------------------------------------------------------
+console.log('\n--- TEST GROUP 8: Live Environmental Telemetry & WBGT Calculations ---');
+const testTw = calculateWetBulbTemperature(35.0, 60.0);
+assert(testTw > 25.0 && testTw < 32.0, `Calculates accurate psychrometric wet-bulb temperature: ${testTw}°C (from 35°C @ 60% RH)`);
+
+const testWbgt = calculateWBGT(38.0, 50.0);
+assert(testWbgt >= 30.0, `Calculates accurate WBGT heat stress index: ${testWbgt}°C`);
+
+const liveZoneTelemetry = await fetchLiveZoneTelemetry('ZONE-A');
+assert(liveZoneTelemetry.zoneId === 'ZONE-A', 'Fetches live telemetry structure for Mussafah / ICAD');
+assert(typeof liveZoneTelemetry.environmental.wbgt === 'number', 'Telemetry contains computed WBGT index');
+assert(typeof liveZoneTelemetry.environmental.pm25 === 'number', 'Telemetry contains ambient PM2.5 reading');
+
+// -----------------------------------------------------------------
+// TEST GROUP 9: ABU DHABI MALAFFI / HL7 FHIR v4 INTEROPERABILITY
+// -----------------------------------------------------------------
+console.log('\n--- TEST GROUP 9: Abu Dhabi Malaffi / HL7 FHIR v4 Interoperability ---');
+const sampleMalaffiBundle = generateSampleMalaffiBundle('heatwave', 'ZONE-A');
+assert(sampleMalaffiBundle.resourceType === 'Bundle', 'Generates valid HL7 FHIR v4 Bundle');
+assert(sampleMalaffiBundle.entry.length > 0, `Bundle contains clinical entries (count: ${sampleMalaffiBundle.entry.length})`);
+
+const parsedMalaffi = parseMalaffiFHIRBundle(sampleMalaffiBundle);
+assert(parsedMalaffi.status === 'SUCCESS', 'Parses Malaffi FHIR bundle successfully');
+assert(parsedMalaffi.aggregatedByZone['ZONE-A'].heatStrainCount > 0, `Extracts syndromic heat strain encounters: ${parsedMalaffi.aggregatedByZone['ZONE-A'].heatStrainCount}`);
+
+// -----------------------------------------------------------------
+// TEST GROUP 10: MICROSOFT TEAMS ADAPTIVE CARDS v1.4
+// -----------------------------------------------------------------
+console.log('\n--- TEST GROUP 10: Microsoft Teams Adaptive Card v1.4 Dispatch ---');
+const samplePlaybook = playbooks.activePlaybooks[0];
+const teamsCard = formatTeamsAdaptiveCard(riskEval, surgeRecord, samplePlaybook);
+assert(teamsCard.type === 'message', 'Teams payload type is message');
+assert(teamsCard.attachments[0].contentType === 'application/vnd.microsoft.card.adaptive', 'Attachment is standard Microsoft Adaptive Card');
+const cardContent = teamsCard.attachments[0].content;
+assert(cardContent.version === '1.4', 'Adaptive Card adheres to v1.4 schema');
+assert(cardContent.actions && cardContent.actions.length >= 2, 'Card includes interactive Action buttons for field operations');
+
+const simulatedDispatch = await dispatchTeamsAlert(null, teamsCard);
+assert(simulatedDispatch.status === 'SIMULATED_PREVIEW', 'Supports simulated card inspection without corporate account');
+
+// -----------------------------------------------------------------
+// TEST GROUP 11: AI INCIDENT COMMANDER EXECUTIVE BRIEFING
+// -----------------------------------------------------------------
+console.log('\n--- TEST GROUP 11: AI Incident Commander Synthesis ---');
+const aiBrief = generateAICommanderBrief(riskEval, surgeRecord, playbooks, impact);
+assert(aiBrief.briefId.startsWith('BRIEF-AIC-'), 'Generates unique traceable executive briefing ID');
+assert(aiBrief.regulatoryFrameworks.some(r => r.includes('MoHRE')), 'Explicitly cites UAE MoHRE Midday Work Ban regulatory framework');
+assert(aiBrief.markdownReport.length > 200, 'Generates comprehensive Markdown executive briefing report');
 
 // -----------------------------------------------------------------
 // TEST SUMMARY
