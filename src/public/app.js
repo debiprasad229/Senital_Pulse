@@ -451,15 +451,6 @@ function downloadAiCommanderBrief() {
   downloadAnchor.remove();
 }
 
-    // Re-render Lucide icons
-    if (window.lucide) {
-      window.lucide.createIcons();
-    }
-  } catch (err) {
-    console.error('Failed to load scenario data:', err);
-  }
-}
-
 /**
  * Update Top KPI Summary
  */
