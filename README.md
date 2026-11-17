@@ -1,5 +1,6 @@
 # 🛡️ SentinelPulse: Population & Workforce Health Early Warning Platform
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel%20Deployment-success?style=for-the-badge&logo=vercel)](https://senital-pulse.vercel.app)
 [![Tests](https://img.shields.io/badge/tests-49%20passed-brightgreen.svg)](https://github.com/debiprasad229/Senital_Pulse)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-blue.svg)](https://nodejs.org)
 [![Interoperability](https://img.shields.io/badge/FHIR-v4.0.1%20Malaffi%20HIE-indigo.svg)](https://malaffi.ae)
@@ -7,7 +8,8 @@
 [![Challenge](https://img.shields.io/badge/Challenge-Population%20Health%2006-red.svg)](https://hack2skill.com)
 
 > **Population Health · Challenge 06: Population and Workforce Health Early Warning**  
-> *Developed for the Department of Health – Abu Dhabi, Microsoft, Inception42/G42, MBZUAI, and Hack2skill.*
+> *Developed for the Department of Health – Abu Dhabi, Microsoft, Inception42/G42, MBZUAI, and Hack2skill.*  
+> **🌐 Live Production URL:** [https://senital-pulse.vercel.app](https://senital-pulse.vercel.app) *(or run locally at `http://localhost:3000`)*
 
 ---
 
@@ -164,6 +166,38 @@ Open your browser at:
 - **Vercel:** Repository is already pre-configured with `vercel.json`. Push to GitHub and deploy in 1 click at [vercel.com](https://vercel.com).
 - **Render:** Connect repository to [render.com](https://render.com) for a 100% free Node.js web service.
 - **Detailed Instructions:** See [FREE_DEPLOYMENT_GUIDE.md](file:///c:/Users/gamer/Desktop/health%20proj/FREE_DEPLOYMENT_GUIDE.md).
+
+---
+
+## 🔌 Complete REST API Reference
+
+SentinelPulse exposes a modular suite of endpoints:
+
+| Method | Endpoint | Description |
+| :---: | :--- | :--- |
+| `GET` | `/api/health` | System health check, service version, and uptime status. |
+| `GET` | `/api/backtest?scenario={s}&days={d}` | Replays surveillance scenarios (`heatwave`, `particulate_respiratory`, `viral_workplace_cluster`) with lead time, confusion matrix, and stress-test benchmarks. |
+| `GET` | `/api/telemetry/live?zoneId={id}` | Ingests real-time Open-Meteo weather and air quality for Abu Dhabi industrial zones with calculated WBGT. |
+| `GET` | `/api/fhir/sample-bundle` | Generates sample Malaffi HL7 FHIR v4 syndromic bundles (`LOINC 82257-7`, `ICD-10 T67.0 / J45.9`). |
+| `POST` | `/api/fhir/ingest` | Ingests and parses incoming HL7 FHIR v4 bundles into SentinelPulse syndromic counters. |
+| `POST` | `/api/webhooks/dispatch` | Formats and dispatches official Microsoft Teams Adaptive Card v1.4 payloads or generates simulated previews. |
+| `POST` | `/api/ai/brief` | Generates comprehensive AI Incident Commander Executive Briefings citing UAE MoHRE & ADPHC frameworks. |
+| `GET` | `/api/privacy-view?role={r}` | Demonstrates Role-Based Access Control and small-cell suppression ($n < 5 \rightarrow \text{"<5"}$) with the employer medical air-gap. |
+
+---
+
+## 🎯 Evaluator & Judge 2-Minute Demo Guide
+
+To demonstrate all key capabilities of SentinelPulse in 2 minutes:
+
+1. **Test the Lead-Time Window:** Click **`Auto-Play Outbreak`** on the 30-day timeline. Watch pre-clinical environmental WBGT and shift fatigue flash amber on **Days 16–20**, triggering early warnings **3 to 5 days before** hospital emergency admissions surge into red on **Day 23**.
+2. **Inspect the Explainability Engine:** Click **ZONE-A (Mussafah)** to isolate metrics. Observe the **Attribution Waterfall** showing exact percentage weights (e.g. *WBGT: 42%*, *Absence: 36%*) and statistical Z-score deviations (+2.8σ).
+3. **Verify the Privacy Guardian:** Switch the Role dropdown to **`Facility Operations / HR Manager`**. Notice the green banner switch to a red **Ethical & Legal Air-Gap notice**: individual medical logs disappear (`ACCESS_RESTRICTED`), showing only generalized hazard ratings and operational work-orders.
+4. **Test Live Open-Meteo Telemetry:** Switch the Scenario dropdown to **`🔴 Live UAE Industrial Telemetry (Open-Meteo)`** to pull live real-time ambient data for Abu Dhabi's industrial zones.
+5. **Inspect Enterprise Integrations:**
+   - Click **`Malaffi HIE (FHIR)`** in the header to view the raw FHIR JSON stream and simulate instant hospital bundle ingestion.
+   - Click **`MS Teams Card`** under Decision Support to inspect the rendered Microsoft Teams Adaptive Card v1.4.
+   - Click **`AI Commander`** in the header to generate the synthesized Executive Health Briefing.
 
 ---
 
